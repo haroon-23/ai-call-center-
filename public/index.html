@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Call Center Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text; /* Standard property for compatibility */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .online { background: #10b981; }
+        .busy { background: #f59e0b; }
+        .offline { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .call-log {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .call-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .call-item:hover {
+            border-color: #667eea;
+            background: #f8faff;
+            transform: translateX(5px);
+        }
+
+        .call-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .call-id {
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .call-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .call-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .call-detail {
+            display: flex;
+            align-items: center;
+        }
+
+        .call-detail strong {
+            margin-right: 5px;
+            color: #333;
+        }
+
+        .agent-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .agent-item:hover {
+            border-color: #667eea;
+            background: #f8faff;
+        }
+
+        .agent-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .agent-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .agent-details h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .agent-status {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .active-call {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+            to { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }
+        }
+
+        .active-call h3 {
+            margin-bottom: 10px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Call Center Dashboard</h1>
+            <p><span class="status-indicator online"></span>System Status: Online & Ready</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCalls">0</div>
+                <div class="stat-label">Total Calls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgDuration">0s</div>
+                <div class="stat-label">Avg Duration</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedCalls">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeAgents">0</div>
+                <div class="stat-label">Active Agents</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">📞 Call Logs</h2>
+                <div id="activeCallContainer"></div>
+                <div class="call-log" id="callLog">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading call data...
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">👥 Agent Status</h2>
+                <div class="agent-list" id="agentList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading agent data...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = {
+            calls: [],
+            activeCall: null,
+            agents: [],
+            stats: {}
+        };
+
+        async function loadDashboardData() {
+            try {
+                // Load calls data
+                const callsResponse = await fetch('/api/calls');
+                const callsData = await callsResponse.json();
+                
+                // Load agents data
+                const agentsResponse = await fetch('/api/agents');
+                const agentsData = await agentsResponse.json();
+
+                dashboardData = {
+                    calls: callsData.calls || [],
+                    activeCall: callsData.activeCall,
+                    stats: callsData.stats || {},
+                    agents: agentsData || []
+                };
+
+                updateDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showError('Failed to load dashboard data. Please check your server connection.');
+            }
+        }
+
+        function updateDashboard() {
+            updateStats();
+            updateCallLog();
+            updateAgentList();
+        }
+
+        function updateStats() {
+            const { stats, agents } = dashboardData;
+            
+            document.getElementById('totalCalls').textContent = stats.totalCalls || 0;
+            document.getElementById('avgDuration').textContent = `${stats.avgDuration || 0}s`;
+            document.getElementById('completedCalls').textContent = stats.completedCalls || 0;
+            document.getElementById('activeAgents').textContent = 
+                agents.filter(agent => agent.status === 'available' || agent.status === 'busy').length;
+        }
+
+        function updateCallLog() {
+            const { calls, activeCall } = dashboardData;
+            const callLogContainer = document.getElementById('callLog');
+            const activeCallContainer = document.getElementById('activeCallContainer');
+
+            // Show active call if exists
+            if (activeCall) {
+                activeCallContainer.innerHTML = `
+                    <div class="active-call">
+                        <h3>🔴 Active Call</h3>
+                        <p><strong>Caller:</strong> ${activeCall.responses?.name || 'Unknown'}</p>
+                        <p><strong>State:</strong> ${formatState(activeCall.state)}</p>
+                        <p><strong>Duration:</strong> ${getCallDuration(activeCall.startTime)}</p>
+                    </div>
+                `;
+            } else {
+                activeCallContainer.innerHTML = '';
+            }
+
+            // Show call history
+            if (calls.length === 0) {
+                callLogContainer.innerHTML = `
+                    <div class="loading">
+                        <p>No calls yet. Waiting for incoming calls...</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const callsHtml = calls
+                .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+                .map(call => `
+                    <div class="call-item" onclick="showCallDetails('${call.sid}')">
+                        <div class="call-header">
+                            <span class="call-id">${call.sid.substring(0, 10)}...</span>
+                            <span class="call-time">${formatTime(call.startTime)}</span>
+                        </div>
+                        <div class="call-details">
+                            <div class="call-detail">
+                                <strong>👤</strong> ${call.responses?.name || 'Unknown'}
+                            </div>
+                            <div class="call-detail">
+                                <strong>🎂</strong> ${call.responses?.age || 'N/A'}
+                            </div>
+                            <div class="call-detail">
+                                <strong>⏱️</strong> ${call.duration || 0}s
+                            </div>
+                            <div class="call-detail">
+                                <strong>📋</strong> ${call.responses?.issue?.substring(0, 30) || 'N/A'}${call.responses?.issue?.length > 30 ? '...' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            callLogContainer.innerHTML = callsHtml;
+        }
+
+        function updateAgentList() {
+            const { agents } = dashboardData;
+            const agentListContainer = document.getElementById('agentList');
+
+            if (agents.length === 0) {
+                agentListContainer.innerHTML = `
+                    <div class="loading">
+                        <p>No agent data available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const agentsHtml = agents.map(agent => `
+                <div class="agent-item">
+                    <div class="agent-info">
+                        <div class="agent-avatar">
+                            ${agent.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div class="agent-details">
+                            <h4>${agent.name}</h4>
+                            <div class="agent-status">
+                                <span class="status-indicator ${agent.status}"></span>
+                                ${formatAgentStatus(agent.status)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            agentListContainer.innerHTML = agentsHtml;
+        }
+
+        function formatState(state) {
+            const stateMap = {
+                'greeting': '👋 Greeting',
+                'asking_name': '📝 Getting Name',
+                'asking_age': '🎂 Getting Age',
+                'asking_issue': '❓ Understanding Issue',
+                'routing': '📞 Routing to Agent',
+                'completed': '✅ Completed'
+            };
+            return stateMap[state] || state;
+        }
+
+        function formatAgentStatus(status) {
+            const statusMap = {
+                'available': 'Available',
+                'busy': 'On Call',
+                'offline': 'Offline'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+
+        function getCallDuration(startTime) {
+            const duration = Math.floor((new Date() - new Date(startTime)) / 1000);
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function showCallDetails(callSid) {
+            // In a real app, you might show a modal with full call details
+            alert(`Call Details for ${callSid}\n\nThis would show full transcript and call analytics in a production system.`);
+        }
+
+        function showError(message) {
+            document.getElementById('callLog').innerHTML = `
+                <div class="loading">
+                    <p style="color: #ef4444;">❌ ${message}</p>
+                </div>
+            `;
+        }
+
+        // Initialize dashboard
+        loadDashboardData();
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadDashboardData, 10000);
+    </script>
+</body>
+</html>
